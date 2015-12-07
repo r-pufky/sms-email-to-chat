@@ -1,0 +1,13 @@
+Need:
+
+Python Packages:
+- mailbox
+- python
+- sqlite3
+
+https://github.com/daviddrysdale/python-phonenumbers
+install with easy_install
+
+Need to install as root (aggressive sudo umask will mess up imports)
+if screwed up, easy_install -m [package]
+then rm -rfv /usr/local/lib/python2.7/dist-packages/[package]*
