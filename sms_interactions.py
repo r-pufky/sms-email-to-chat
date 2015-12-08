@@ -25,14 +25,14 @@ class Interactions(object):
     Args:
       user1: User object for the first user.
       user2: User object for the second user.
-
-    Returns:
-      UUID of interaction, if consumer wants to use it immediately.
     """
     interaction_id = uuid.uuid4()
     self._usermap.setdefault('%s%s' % (user1, user2), interaction_id)
     self._usermap.setdefault('%s%s' % (user2, user1), interaction_id)
-    return interaction_id
+    #self._usermap.setdefault('%s%s' %
+    #    (user1.Hash(), user2.Hash()), interaction_id)
+    #self._usermap.setdefault('%s%s' %
+    #    (user2.Hash(), user1.Hash()), interaction_id)
 
   def Get(self, user1, user2):
     """ Returns the interaction_id for a given interaction.
@@ -42,6 +42,7 @@ class Interactions(object):
       user2: User object for the second user.
     """
     return self._usermap['%s%s' % (user1, user2)]
+    #return self._usermap['%s%s' % (user1.Hash(), user2.Hash())]
 
 
 if __name__ == '__main__':

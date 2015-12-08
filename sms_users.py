@@ -6,6 +6,8 @@
 import logging
 import phonenumbers
 
+E164 = phonenumbers.PhoneNumberFormat.E164
+
 
 class Error(Exception):
   """ Base exception for library. """
@@ -54,7 +56,7 @@ class User(object):
       if self.phone != phone and self.phone is None:
         self.phone = phone
       elif self.phone != phone and self.phone is not None:
-        logging.warning('Non-duplicate phone detected: %s %s for %s %s',
+        logging.critical('Non-duplicate phone detected: %s %s for %s %s',
                         self.phone, phone, self.name, self.email)
         raise Error('Non-duplicate phone detected: %s %s for %s %s',
                     self.phone, phone, self.name, self.email)
@@ -62,7 +64,7 @@ class User(object):
       if self.name != name and self.name is None:
         self.name = name
       elif self.name != name and self.name is not None:
-        logging.warning('Non-duplicate name detected: %s %s for %s %s',
+        logging.critical('Non-duplicate name detected: %s %s for %s %s',
                         self.name, name, self.email, self.phone)
         raise Error('Non-duplicate name detected: %s %s for %s %s',
                     self.name, name, self.email, self.phone)
@@ -70,13 +72,18 @@ class User(object):
       if self.email != email and self.email is None:
         self.email = email
       elif self.email != email and self.email is not None:
-        logging.warning('Non-duplicate email detected: %s %s for %s %s',
+        logging.critical('Non-duplicate email detected: %s %s for %s %s',
                         self.email, email, self.name, self.phone)
         raise Error('Non-duplicate email detected: %s %s for %s %s',
                     self.email, email, self.name, self.phone)
 
   def __str__(self):
-    return '(%s, %s, %s)' % (self.phone, self.name, self.email)
+    if self.phone:
+      phone = phonenumbers.format_number(self.phone, E164)
+    else:
+      phone = None
+    return '%s:%s:%s' % (phone, self.name, self.email)
+    #return '(%s, %s, %s)' % (self.phone, self.name, self.email)
 
   def __repr__(self):
     return 'User(%s, %s, %s)' % (self.phone, self.name, self.email)
@@ -96,13 +103,13 @@ class Users(object):
       user: User object to update.
       name: String user's real name to update.
     """
-    # Google Calendar sometimes receives as 'null'
+    # Google Calendar sometimes sets name as 'null'
     if name == 'null':
       name = None
     if user.name is None and name:
       user.name = name
     elif user.name and name and user.name != name:
-      logging.warning('User has two names! %s %s', user, name)
+      logging.critical('User has two names! %s %s', user, name)
       raise Error('User has two names! %s %s' % (user, name))
 
   def _UpdateEmail(self, user, email):
@@ -115,7 +122,7 @@ class Users(object):
     if user.email is None and email:
       user.email = email
     elif user.email and email and user.email != email:
-      logging.warning('User has two emails! %s %s', user, email)
+      logging.critical('User has two emails! %s %s', user, email)
       raise Error('User has two emails! %s %s' % (user, email))
 
   def _UpdatePhone(self, user, phone):
@@ -128,7 +135,7 @@ class Users(object):
     if user.phone is None and phone:
       user.phone = phone
     elif user.phone and phone and user.phone != phone:
-      logging.warning('User has two phones! %s %s', user, phone)
+      logging.critical('User has two phones! %s %s', user, phone)
       raise Error('User has two phones! %s %s' % (user, phone)) 
 
   def ProcessPartialUsers(self):
@@ -151,19 +158,19 @@ class Users(object):
         if user.phone == partial_user.phone and user.phone is not None:
           self._UpdateName(user, partial_user.name)
           self._UpdateEmail(user, partial_user.email)
-          logging.warning('Partial user match on phone: %s / %s',
+          logging.critical('Partial user match on phone: %s / %s',
                           partial_user, user)
           continue
         if user.email == partial_user.email and user.email is not None:
           self._UpdatePhone(user, partial_user.phone)
           self._UpdateName(user, partial_user.name)
-          logging.warning('Partial user match on email: %s / %s',
+          logging.critical('Partial user match on email: %s / %s',
                           partial_user, user)
           continue
         if user.name == partial_user.name and user.name is not None:
           self._UpdatePhone(user, partial_user.phone)
           self._UpdateEmail(user, partial_user.email)
-          logging.warning('Partial user match on name: %s / %s',
+          logging.critical('Partial user match on name: %s / %s',
                           partial_user, user)
           continue
       self._users.append(partial_user)
@@ -197,6 +204,27 @@ class Users(object):
         self._UpdateEmail(user, new_user.email)
         return
     self._users.append(new_user)
+
+  def Find(self, search_user):
+    """ Returns a user object using a query user.
+
+    Any field with a None in it is considered a non-matching case.
+
+    Args:
+      search_user: User object representing the complete user to search for.
+
+    Returns:
+      User object representing the complete user for the search.
+    """
+    for user in self._users:
+      if (user.phone == search_user.phone and user.phone is not None or
+          user.name == search_user.name and user.name is not None or
+          user.email == search_user.email and user.email is not None):
+        return user
+    logging.critical('User not found in user list. This is not possible. %s',
+                    search_user)
+    raise Error('User not found in user list. This is not possible. %s' %
+                search_user)
 
 
 if __name__ == '__main__':

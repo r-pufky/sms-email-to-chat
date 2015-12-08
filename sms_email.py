@@ -105,9 +105,10 @@ class SmsMessage(object):
     content_type: String content type for message.
     message: String actual text message sent over SMS.
     tz: String timezone code for the message. Default 'Etc/UTC' (UTC).
+    uuis: String interaction UUID for the message. Default None.
   """
 
-  def __init__(self, email, tz='Etc/UTC'):
+  def __init__(self, email, tz='Etc/UTC', uuid=None):
     """ Creates a SmsMessage from a mailbox.MaildirMessage email.
     
     Args:
@@ -139,9 +140,10 @@ class SmsMessage(object):
       if not self.message:
         logging.warning('Empty SMS: %s; id: %s', self.date, self.id)
       self.tz = pytz.timezone(tz)
+      self.uuid = None
     except KeyError, e:
-      logging.warning('KeyError: %s', e)
-      logging.warning('INVALID email: %s', email)
+      logging.critical('KeyError: %s', e)
+      logging.critical('INVALID email: %s', email)
       raise InitError('INVALID SMS email: %s', email)
 
   def _ConvertToLocalTime(self):
@@ -149,7 +151,7 @@ class SmsMessage(object):
     local = self.date.replace(tzinfo=pytz.UTC).astimezone(self.tz)
     return self.tz.normalize(local)
 
-  def _GetSender(self):
+  def GetSender(self):
     """ Determines the sender of the message, based on message attributes.
 
     Filter everything we know about the sender into a tuple representing that
@@ -170,7 +172,7 @@ class SmsMessage(object):
       6 - queued
 
     Returns:
-      Tuple (phone, name, email) representing who sent the message.
+      User object representing who sent the message.
     """
     phone = None
     name = None
@@ -190,9 +192,9 @@ class SmsMessage(object):
       name_set = set()
       email_set = set()
     else:
-      logging.warning('SMS Type is not supported: %s', self.type)
-      logging.warning('Details: %s, to: %s, from: %s, message: %s',
-                      self.date, self.to, self.frome, self.message)
+      logging.critical('SMS Type is not supported: %s', self.type)
+      logging.critical('Details: %s, to: %s, from: %s, message: %s',
+                       self.date, self.to, self.frome, self.message)
       raise TypeError('SMS Type is not supported: %s' % self.type)
 
     phones = []
@@ -209,8 +211,8 @@ class SmsMessage(object):
         emails.append(x)
     
     if len(phones) > 1 or len(names) > 1 or len(emails) > 1:
-      logging.warning('Multiple non-duplicate user information: %s %s %s',
-                      phones, names, emails)
+      logging.critical('Multiple non-duplicate user information: %s %s %s',
+                       phones, names, emails)
       raise TypeError('Multiple non-duplicate user information: %s %s %s' %
                       (phones, names, emails))
     if not authoritative.phone and len(phones) > 0:
@@ -227,7 +229,7 @@ class SmsMessage(object):
       email = authoritative.email
     return sms_users.User(phone, name, email)
 
-  def _GetReceiver(self):
+  def GetReceiver(self):
     """ Determines the reciever the message, based on message attributes.
 
     Filter everything we know about the receiver into a tuple representing that
@@ -248,7 +250,7 @@ class SmsMessage(object):
       6 - queued
 
     Returns:
-      Tuple (phone, name, email) representing who sent the message.
+      User object representing who sent the message.
     """
     phone = None
     name = None
@@ -267,7 +269,7 @@ class SmsMessage(object):
       email_set = set(
           [self.address.email, self.to.email, self.subject.email])
     else:
-      logging.warning('SMS Type is not supported: %s', self.type)
+      logging.critical('SMS Type is not supported: %s', self.type)
       raise TypeError('SMS Type is not supported: %s' % self.type)
 
     phones = []
@@ -284,8 +286,8 @@ class SmsMessage(object):
         emails.append(x)
     
     if len(phones) > 1 or len(names) > 1 or len(emails) > 1:
-      logging.warning('Multiple non-duplicate user information: %s %s %s',
-                      phones, names, emails)
+      logging.critical('Multiple non-duplicate user information: %s %s %s',
+                       phones, names, emails)
       raise TypeError('Multiple non-duplicate user information: %s %s %s' %
                       (phones, names, emails))
     if not authoritative.phone and len(phones) > 0:
@@ -313,6 +315,7 @@ def LoadMaildir(maildir, timezone):
   Returns:
     List of SmsMessage objects from email messages.
   """
+  print 'Loading messages ...'
   mbox = mailbox.Maildir(maildir)
   sms_messages = []
   for email in mbox:
