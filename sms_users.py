@@ -83,7 +83,6 @@ class User(object):
     else:
       phone = None
     return '%s:%s:%s' % (phone, self.name, self.email)
-    #return '(%s, %s, %s)' % (self.phone, self.name, self.email)
 
   def __repr__(self):
     return 'User(%s, %s, %s)' % (self.phone, self.name, self.email)
