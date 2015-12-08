@@ -6,6 +6,7 @@
 import logging
 import optparse
 import sys
+import os
 
 import sms_to_chat
 
@@ -24,8 +25,9 @@ def ParseArgs(args):
       dest='maildir',
       help='Maildir directory to process.')
   parser.add_option('-e', '--export', action='store', type='string',
-      dest='export',
-      help='Directory to export chat logs to.')
+      dest='export', default='.',
+      help='Directory to export chat logs to. '
+           'Default: .')
   parser.add_option('-t', '--timezone', action='store', type='string',
       dest='timezone', default='America/Los_Angeles',
       help='Timezone to assume SMS messages were recieved. '
@@ -41,7 +43,15 @@ def main(args):
   options = ParseArgs(args)
   logging.basicConfig(level=getattr(logging, options.log.upper(), None))
   sms_chat = sms_to_chat.SmsToChat(options.maildir, options.timezone)
-  sms_chat.Process()
+  logs = sms_chat.Process()
+  print 'Writing logs ',
+  count = len(logs)
+  for filename, logdata in logs:
+    print '.',
+    location = os.path.join(options.export, filename)
+    file_pointer = open(location, 'w')
+    file_pointer.write(logdata)
+    file_pointer.close()
 
 
 if __name__ == '__main__':
