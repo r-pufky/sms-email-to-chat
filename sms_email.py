@@ -146,11 +146,6 @@ class SmsMessage(object):
       logging.critical('INVALID email: %s', email)
       raise InitError('INVALID SMS email: %s', email)
 
-  def _ConvertToLocalTime(self):
-    """ Converts the given UTC datetime to local timezone. """
-    local = self.date.replace(tzinfo=pytz.UTC).astimezone(self.tz)
-    return self.tz.normalize(local)
-
   def GetSender(self):
     """ Determines the sender of the message, based on message attributes.
 

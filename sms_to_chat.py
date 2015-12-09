@@ -20,25 +20,28 @@ class Message(object):
   Attributes:
     to: User object the actual user sending the message.
     frome: User object the actual user recieving the message.
-    timestamp: datetime object representing the time the message was sent.
+    date: datetime object representing the time the message was sent.
+    tz: pytz.timezone object representing the timezone of the message.
     id: Integer SMS message id for ordering.
     thread: Integer SMS message thread for ordering.
     message: String actual SMS message sent.
   """
 
-  def __init__(self, to, frome, timestamp, id, message):
+  def __init__(self, to, frome, date, tz, id, message):
     """ Create a basic generic message.
 
     Args:
       to: User object the actual user sending the message.
       frome: User object the actual user recieving the message.
-      timestamp: datetime object representing the time the message was sent.
+      date: datetime object representing the time the message was sent.
+      tz: pytz.timezone object representing the timezone of the message.
       id: Integer SMS message id for ordering.
       message: String actual SMS message sent.
     """
     self.to = to
     self.frome = frome
-    self.timestamp = timestamp
+    self.date = date
+    self.tz = tz
     self.id = id
     self.message = message
 
@@ -47,7 +50,7 @@ class Message(object):
 
     Format is: 2006-07-14T12:42:01-05:00 (YYYY-MM-DDTHH:MM:SSMMM-TZ)
     """
-    return self.timestamp.isoformat()
+    return self.date.astimezone(self.tz).isoformat()
 
   def __str__(self):
     return '%s' % self.id
@@ -57,13 +60,15 @@ class Message(object):
 
   def __eq__(self, other):
     return (self.id == other.id and
-            self.timestamp == other.timestamp and
+            self.date == other.date and
+            self.tz == other.tz and
             self.message == other.message and
             self.to == other.to and
             self.frome == other.frome)
 
   def __hash__(self):
-    return hash((self.id, self.timestamp, self.message, self.to, self.frome))
+    return hash(
+        (self.id, self.date, self.tz, self.message, self.to, self.frome))
 
 
 class AdiumLogExporter(object):
@@ -111,10 +116,10 @@ class AdiumLogExporter(object):
     for i in range(total):
       if i == 0:
         log.extend(self._LogStart(messages[i]))
-        initial_date = messages[i].timestamp
+        initial_date = messages[i].date
       elif i == total-1:
         log.extend(self._LogFinish(messages[i]))
-        finish_date = messages[i].timestamp
+        finish_date = messages[i].date
       else:
         log.append(self._CHAT_MESSAGE % (
             messages[i].frome.Log(),
@@ -122,7 +127,7 @@ class AdiumLogExporter(object):
             messages[i].message))
     log.append(self._CHAT_FOOTER)
     if total == 1:
-      finish_date = messages[0].timestamp
+      finish_date = messages[0].date
     return (initial_date, finish_date, u'\n'.join(log))
 
 
@@ -180,7 +185,8 @@ class SmsToChat(object):
     for mail in self.smss:
       from_user = self.users.Find(mail.GetSender())
       to_user = self.users.Find(mail.GetReceiver())
-      sms = Message(to_user, from_user, mail.date, mail.id, mail.message)
+      sms = Message(to_user, from_user, mail.date,
+                    mail.tz, mail.id, mail.message)
       self.convos.setdefault(mail.uuid, {})
       self.convos[mail.uuid].setdefault(mail.thread, [])
       self.convos[mail.uuid][mail.thread].append(sms)
