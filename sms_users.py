@@ -7,6 +7,7 @@ import logging
 import phonenumbers
 
 E164 = phonenumbers.PhoneNumberFormat.E164
+INTERNATIONAL = phonenumbers.PhoneNumberFormat.INTERNATIONAL
 
 
 class Error(Exception):
@@ -76,6 +77,29 @@ class User(object):
                         self.email, email, self.name, self.phone)
         raise Error('Non-duplicate email detected: %s %s for %s %s',
                     self.email, email, self.name, self.phone)
+
+  def Log(self):
+    """ Generates a String representation of a User object for Chat log.
+
+    NOT the same as the __str__ object.
+
+    Returns:
+      String chat log representation of the user:
+      +X XXX-XXX-XXXX 'Full Name' <email>
+    """
+    if self.phone:
+      phone = phonenumbers.format_number(self.phone, INTERNATIONAL)
+    else:
+      phone = ''
+    if self.name:
+      name = "'%s'" % self.name
+    else:
+      name = ''
+    if self.email:
+      email = '<%s>' % self.email
+    else:
+      email = ''
+    return ' '.join(('%s %s %s' % (phone, name, email)).split())
 
   def __str__(self):
     if self.phone:

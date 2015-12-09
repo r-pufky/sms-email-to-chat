@@ -77,17 +77,17 @@ class AdiumLogExporter(object):
   def _LogStart(self, message):
     """ Returns a list representing the start of a chat log. """
     log = []
-    log.append(self._CHAT_HEADER % message.frome)
+    log.append(self._CHAT_HEADER % message.frome.Log())
     log.append(self._CHAT_OPEN % message.LogDate())
     log.append(self._CHAT_MESSAGE % (
-        message.frome, message.LogDate(), message.message))
+        message.frome.Log(), message.LogDate(), message.message))
     return log
 
   def _LogFinish(self, message):
     """ Returns a list representing the end of a chat log. """
     log = []
     log.append(self._CHAT_MESSAGE % (
-        message.frome, message.LogDate(), message.message))
+        message.frome.Log(), message.LogDate(), message.message))
     log.append(self._CHAT_CLOSE % message.LogDate())
     return log
 
@@ -117,7 +117,9 @@ class AdiumLogExporter(object):
         finish_date = messages[i].timestamp
       else:
         log.append(self._CHAT_MESSAGE % (
-            messages[i].frome, messages[i].LogDate(), messages[i].message))
+            messages[i].frome.Log(),
+            messages[i].LogDate(),
+            messages[i].message))
     log.append(self._CHAT_FOOTER)
     if total == 1:
       finish_date = messages[0].timestamp
