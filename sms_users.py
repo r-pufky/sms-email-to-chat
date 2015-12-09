@@ -85,7 +85,7 @@ class User(object):
 
     Returns:
       String chat log representation of the user:
-      +X XXX-XXX-XXXX 'Full Name' <email>
+      +X XXX-XXX-XXXX 'Full Name' (email)
     """
     if self.phone:
       phone = phonenumbers.format_number(self.phone, INTERNATIONAL)
@@ -96,7 +96,7 @@ class User(object):
     else:
       name = ''
     if self.email:
-      email = '<%s>' % self.email
+      email = '(%s)' % self.email
     else:
       email = ''
     return ' '.join(('%s %s %s' % (phone, name, email)).split())
