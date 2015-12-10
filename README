@@ -1,13 +1,20 @@
-Need:
+sms-email-to-chat:
 
-Python Packages:
-- mailbox
-- python
-- sqlite3
+Converts SMS email copies/backups to adium chat log v0.4 XML format for easy
+parsing and storage.
 
-https://github.com/daviddrysdale/python-phonenumbers
-install with easy_install
+To execute:
 
-Need to install as root (aggressive sudo umask will mess up imports)
-if screwed up, easy_install -m [package]
-then rm -rfv /usr/local/lib/python2.7/dist-packages/[package]*
+./convert.py -m <maildir> -e <exportdir>
+
+you can specify timezone and logging verbosity.
+
+
+Install missing python packages with easy_install:
+  Need to install as root (use su -, as sudo umask will make easy_instal not
+  load correctly with normal user).
+
+  if screwed up then:
+
+    easy_install -m [package]
+    rm -rfv /usr/local/lib/python2.7/dist-packages/[package]*
